@@ -1,29 +1,49 @@
+# ===============================
 # Python
+# ===============================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Virtual environments
+# ===============================
+# Virtual Environments
+# ===============================
 venv/
-.env
-kbBot/
 .venv/
+kbBot/
+.env
+.env.*
+pip-wheel-metadata/
 
-# Vector databases / embeddings
+# ===============================
+# Vector Databases / Embeddings
+# ===============================
 vector_db/
-chroma.sqlite3
+chroma/
+*.sqlite3
 *.bin
 *.index
 
-# ML / DL artifacts
+# ===============================
+# ML / DL Artifacts
+# ===============================
 *.pt
 *.pth
 *.ckpt
 *.onnx
+*.safetensors
 
-# OS
+# ===============================
+# OS / Editors
+# ===============================
 .DS_Store
+.vscode/
+.idea/
 
-# Logs
+# ===============================
+# Logs / Temp Files
+# ===============================
 *.log
+*.tmp
+*.cache
