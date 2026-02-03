@@ -1,5 +1,29 @@
-.env
-.DS_Store
+# Python
 __pycache__/
 *.pyc
-myvenv/
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
+kbBot/
+.venv/
+
+# Vector databases / embeddings
+vector_db/
+chroma.sqlite3
+*.bin
+*.index
+
+# ML / DL artifacts
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# OS
+.DS_Store
+
+# Logs
+*.log
