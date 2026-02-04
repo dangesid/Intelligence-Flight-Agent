@@ -114,4 +114,18 @@ class FlightVectorStore:
             "carriers": sorted(carriers),
             "flights": sorted(flights)
         }
+    def lookup_by_flight_id(self, flight_number: str):
+        """
+        Exact flight lookup using Chroma metadata (NOT embeddings)
+        """
+        results = self.collection.get(
+            where={"flight": int(flight_number)},
+            include=["metadatas"]
+        )
 
+        metadatas = results.get("metadatas", [])
+
+        if not metadatas:
+            return None
+
+        return metadatas[0]
