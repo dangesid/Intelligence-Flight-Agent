@@ -1,6 +1,6 @@
 # reingest.py
 import os
-from src.vector_store import VectorStore
+from src.vector_store import FlightVectorStore
 
 # DEFAULTS
 DEFAULT_CSV = os.path.join("data", "flights.csv")  # default CSV file path
@@ -18,7 +18,7 @@ def main():
     print(f"⚡ Batch size: {batch_size}")
 
     # Initialize vector store
-    store = VectorStore(collection_name=collection_name)
+    store = FlightVectorStore(collection_name=collection_name)
 
     # Ingest CSV into vector DB
     store.ingest_csv(csv_path=csv_path, batch_size=batch_size)
