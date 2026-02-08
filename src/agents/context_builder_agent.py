@@ -1,10 +1,10 @@
 from typing import Dict, Any, List
 from src.agents.base_agent import BaseAgent
 
-
 class ContextBuilderAgent(BaseAgent):
     """
     Converts structured retrieved_docs into LLM-readable text
+    Works for any kind of data, not specific to flights
     """
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
@@ -16,6 +16,7 @@ class ContextBuilderAgent(BaseAgent):
             and payload.get("retrieved_docs")
             and not answer.get("text")
         )
+
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         docs = payload.get("retrieved_docs", [])
 
@@ -27,18 +28,16 @@ class ContextBuilderAgent(BaseAgent):
 
         for i, row in enumerate(docs[:10], start=1):
 
-            # Case 1: already text (most likely your case)
+            # Case 1: already text
             if isinstance(row, str):
                 context_chunks.append(f"[Doc {i}] {row}")
 
-            # Case 2: structured dict (future-proof)
+            # Case 2: structured dict
             elif isinstance(row, dict):
-                context_chunks.append(
-                    f"Flight {row.get('flight')} from {row.get('origin')} to {row.get('dest')}, "
-                    f"carrier {row.get('carrier')}, "
-                    f"departs at {row.get('dep_time')}, arrives at {row.get('arr_time')}, "
-                    f"distance {row.get('distance')} miles."
-                )
+                # Convert all key-value pairs into readable text
+                fields = [f"{k}: {v}" for k, v in row.items()]
+                doc_text = ", ".join(fields)
+                context_chunks.append(f"[Doc {i}] {doc_text}")
 
             # Fallback
             else:
@@ -46,9 +45,6 @@ class ContextBuilderAgent(BaseAgent):
 
         context = "\n".join(context_chunks).strip()
 
-        if not context:
-            payload["context"] = "NO_RELEVANT_DATA"
-        else:
-            payload["context"] = context
+        payload["context"] = context if context else "NO_RELEVANT_DATA"
 
         return payload

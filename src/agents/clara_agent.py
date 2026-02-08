@@ -11,17 +11,21 @@ class ClaraAgent(BaseAgent):
     - Runs once
     - Produces answer OR refusal
     - Terminates orchestration
+    - Fully grounded on provided context (retrieved_docs or gap_report)
     """
 
     def __init__(self, llm=None):
+        # Initialize LLM; can pass custom LLM instance
         self.llm = llm or get_llm()
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        # Clara runs ONLY if:
-        # - Query exists
-        # - System not finalized
-        # - Either docs OR gap report exists
-        # - No answer yet
+        """
+        Clara runs ONLY if:
+        - Query exists
+        - System not finalized
+        - Either retrieved_docs OR gap_report exists
+        - No answer yet
+        """
         return (
             "query" in payload
             and not payload.get("finalized")
@@ -50,34 +54,21 @@ class ClaraAgent(BaseAgent):
             return payload
 
         # 📚 DOC-BASED ANSWER
-        context = "\n".join(docs[:5]) if docs else "NO_DATA"
-
-        prompt = f"""
-You are CLARA.
-Answer STRICTLY using the provided data.
-
-Question:
-{query}
-
-Data:
-{context}
-
-Rules:
-- If answer exists, answer clearly
-- If data is insufficient, say so
-- NO hallucination
-- NO external knowledge
-"""
-
-        try:
-            response = self.llm.generate(prompt)
-        except Exception:
-            payload["answer"] = {
-                "text": "Unable to generate an answer with the current data.",
-                "confidence": 0.0
-            }
-            payload["finalized"] = True
-            return payload
+        if docs:
+            try:
+                response = self.llm.generate_with_context(
+                    query=query,
+                    documents=docs,
+                    instruction=(
+                        "Answer strictly using the provided data. "
+                        "If the information is not present, say 'Data not available'. "
+                        "Do NOT use any external knowledge or make assumptions."
+                    )
+                )
+            except Exception:
+                response = "Unable to generate an answer with the current data."
+        else:
+            response = "Data not available."
 
         payload["answer"] = {
             "text": response.strip(),
