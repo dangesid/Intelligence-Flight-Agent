@@ -1,31 +1,25 @@
-from typing import Dict, Any
 from src.agents.base_agent import BaseAgent
-import re
-
+from src.llm_engine.ollama_client import OllamaWrapper
 
 class QueryIntentAgent(BaseAgent):
     """
-    Determines user intent from the query.
-    Runs exactly once.
+    Uses LLM to classify intent dynamically. Fully agentic.
     """
+    def __init__(self, llm_client: OllamaWrapper):
+        self.llm = llm_client
 
-    def can_handle(self, payload: Dict[str, Any]) -> bool:
+    def can_handle(self, payload):
         return "query" in payload and "intent" not in payload
 
-    def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        query = payload["query"].lower()
-
-        # Lightweight intent inference (not routing)
-        flight_id_match = re.search(r"\bflight\s*(\d+)\b", query)
-
-        if flight_id_match:
-            payload["intent"] = {
-                "type": "flight_id_lookup",
-                "flight_number": flight_id_match.group(1)
-            }
-        else:
-            payload["intent"] = {
-                "type": "general_flight_query"
-            }
-
+    def run(self, payload):
+        query = payload["query"]
+        prompt = f"""
+        You are an Intent Classifier Agent. 
+        Classify this user query into one of the following intents:
+        simple_search, gap_analysis, complex_reasoning, other
+        Respond with only the label.
+        Query: "{query}"
+        """
+        intent = self.llm.generate(prompt)
+        payload["intent"] = {"type": intent.strip()}
         return payload
