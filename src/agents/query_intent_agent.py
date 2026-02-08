@@ -1,6 +1,6 @@
 import re
 
-class QueryIntentAgents:
+class QueryIntentAgent:
     def classify(self, query: str) -> dict:
         q = query.lower()
 
