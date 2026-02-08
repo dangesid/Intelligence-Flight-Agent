@@ -6,9 +6,13 @@ from src.agents.vector_agent import VectorAgent
 from src.agents.knowledge_gap_agent import KnowledgeGapAgent
 from src.agents.clara_agent import ClaraAgent
 
+from src.llm_engine.ollama_client import OllamaWrapper
 
 def main():
     query = input("Ask a flight question: ").strip()
+
+    #Initialise LLM Client 
+    llm_client = OllamaWrapper()
 
     # 🧠 Initial shared memory
     payload = {
@@ -17,7 +21,7 @@ def main():
 
     # 🤖 Register agents (order does NOT matter)
     agents = [
-        QueryIntentAgent(),
+        QueryIntentAgent(llm_client),
         VectorAgent(),
         KnowledgeGapAgent(),
         ClaraAgent()
