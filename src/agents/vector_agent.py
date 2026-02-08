@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 from src.agents.base_agent import BaseAgent
-from src.ingestion.vector_store import FlightVectorStore
+from src.vector_store import FlightVectorStore
 
 
 class VectorAgent(BaseAgent):
@@ -54,5 +54,5 @@ class VectorAgent(BaseAgent):
         print("\n🔍 [VectorAgent] Retrieved Documents:")
         for i, (doc, dist) in enumerate(zip(docs, distances), start=1):
             print(f"[Doc {i}] Distance={dist:.3f} | {doc}")
-            
+
         return payload
