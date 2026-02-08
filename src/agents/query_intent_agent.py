@@ -1,31 +1,31 @@
+from typing import Dict, Any
+from src.agents.base_agent import BaseAgent
 import re
 
-class QueryIntentAgent:
-    def classify(self, query: str) -> dict:
-        q = query.lower()
 
-        match = re.search(r"\bflight\s+(\d+)\b", q)
-        if match:
-            return {
-                "intent": "flight_id_lookup",
-                "flight_number": match.group(1)
+class QueryIntentAgent(BaseAgent):
+    """
+    Determines user intent from the query.
+    Runs exactly once.
+    """
+
+    def can_handle(self, payload: Dict[str, Any]) -> bool:
+        return "query" in payload and "intent" not in payload
+
+    def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        query = payload["query"].lower()
+
+        # Lightweight intent inference (not routing)
+        flight_id_match = re.search(r"\bflight\s*(\d+)\b", query)
+
+        if flight_id_match:
+            payload["intent"] = {
+                "type": "flight_id_lookup",
+                "flight_number": flight_id_match.group(1)
+            }
+        else:
+            payload["intent"] = {
+                "type": "general_flight_query"
             }
 
-        if "from" in q and "to" in q:
-            return {"intent": "route_query"}
-
-        if "delay" in q or "status" in q:
-            return {"intent": "status_query"}
-
-        # 🆕 SYSTEM / DATASET CAPABILITY
-        if any(k in q for k in [
-            "what routes",
-            "what data",
-            "what flights do you have",
-            "coverage",
-            "available routes",
-            "do you have data"
-        ]):
-            return {"intent": "system_capability"}
-
-        return {"intent": "general"}
+        return payload

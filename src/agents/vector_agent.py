@@ -1,33 +1,58 @@
-from typing import Dict, Any
-from .base_agent import BaseAgent
-from src.ingestion.vector_store import FlightVectorStore, VectorStore
+from typing import Dict, Any, List
+from src.agents.base_agent import BaseAgent
+from src.ingestion.vector_store import FlightVectorStore
+
 
 class VectorAgent(BaseAgent):
     """
-    Autonomous document retrieval agent.
-    Decides dynamically if vector search is needed and retrieves docs.
+    Autonomous Vector Retrieval Agent
+
+    Responsibilities:
+    - Decide if vector retrieval is needed
+    - Perform semantic search
+    - Populate payload with retrieved docs, distances, metadata
+    - Make NO decisions about relevance or answers
     """
-    def __init__(self, vector_store: FlightVectorStore = None):
+
+    def __init__(self, vector_store: FlightVectorStore | None = None):
         self.vector_store = vector_store or FlightVectorStore()
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        # Run if vector search has not been performed yet and intent is not 'flight_id_lookup'
-        intent_type = payload.get("intent", {}).get("type")
-        return "retrieved_docs" not in payload and intent_type != "flight_id_lookup"
+        """
+        Run if:
+        - A query exists
+        - Retrieval has not already been performed
+        """
+        return (
+            "query" in payload
+            and "retrieved_docs" not in payload
+        )
 
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        query = payload.get("query", "")
+        query: str = payload.get("query", "").strip()
+
+        if not query:
+            payload["retrieved_docs"] = []
+            payload["distances"] = []
+            payload["metadatas"] = []
+            return payload
 
         results = self.vector_store.query_with_scores(query)
+
         if not results:
-            # No results found
             payload["retrieved_docs"] = []
             payload["distances"] = []
             payload["metadatas"] = []
             return payload
 
         docs, distances, metadatas = zip(*results)
+
         payload["retrieved_docs"] = list(docs)
         payload["distances"] = list(distances)
         payload["metadatas"] = list(metadatas)
+
+        print("\n🔍 [VectorAgent] Retrieved Documents:")
+        for i, (doc, dist) in enumerate(zip(docs, distances), start=1):
+            print(f"[Doc {i}] Distance={dist:.3f} | {doc}")
+            
         return payload

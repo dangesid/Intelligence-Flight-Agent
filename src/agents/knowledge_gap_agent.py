@@ -1,50 +1,79 @@
-class KnowledgeGapAgent:
+from typing import Dict, Any, List
+from src.agents.base_agent import BaseAgent
+
+
+class KnowledgeGapAgent(BaseAgent):
     """
-    Explains WHY CLARA cannot answer
+    Autonomous Knowledge Gap Detection Agent
+
+    Responsibilities:
+    - Inspect retrieval results
+    - Decide if information is insufficient, ambiguous, or out-of-domain
+    - Produce a structured gap_report
+    - Never block other agents explicitly
     """
 
-    def analyze(
-        self,
-        query: str,
-        intent: str,
-        distances: list,
-        metadatas: list,
-        domain_summary: dict
-    ) -> str:
-
-        best_distance = min(distances)
-
-        # -----------------------------
-        # System capability gaps
-        # -----------------------------
-        if intent == "system_capability":
-            return (
-                "This question is about system capabilities.\n"
-                "I can answer questions about scheduled flights, routes, carriers, "
-                "and flight numbers present in my dataset."
-            )
-
-        # -----------------------------
-        # Weak semantic match
-        # -----------------------------
-        if best_distance > 0.85 and best_distance <= 0.95:
-            return (
-                "I found flight data that is somewhat related, "
-                "but not enough to confidently answer your question.\n\n"
-                "Try being more specific, for example:\n"
-                "• Flights from LGA to ATL\n"
-                "• Details of Flight 347"
-            )
-
-        # -----------------------------
-        # Domain gap
-        # -----------------------------
-        origins = domain_summary.get("origins", [])
-        destinations = domain_summary.get("destinations", [])
-
+    def can_handle(self, payload: Dict[str, Any]) -> bool:
+        """
+        Run if:
+        - A query exists
+        - Retrieval has already happened
+        - No final answer has been produced yet
+        """
         return (
-            "I don’t have enough information to answer that question.\n\n"
-            "My data currently covers routes such as:\n"
-            f"- Origins: {', '.join(origins[:5])}\n"
-            f"- Destinations: {', '.join(destinations[:5])}\n"
+            "query" in payload
+            and "retrieved_docs" in payload
+            and "answer" not in payload
+            and "gap_report" not in payload
         )
+
+    def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        query: str = payload.get("query", "")
+        docs: List[str] = payload.get("retrieved_docs", [])
+        intent = payload.get("intent", {})
+
+        # -------------------------
+        # Case 1: No data at all
+        # -------------------------
+        if not docs:
+            payload["gap_report"] = {
+                "gap_type": "NO_DATA",
+                "reason": "No relevant documents were found for this query.",
+                "query": query
+            }
+            return payload
+
+        # -------------------------
+        # Case 2: Too generic / ambiguous
+        # -------------------------
+        unique_signals = set()
+        for doc in docs:
+            parts = doc.split(",")
+            for p in parts:
+                if "from" in p.lower() or "to" in p.lower():
+                    unique_signals.add(p.strip())
+
+        if len(unique_signals) > 5:
+            payload["gap_report"] = {
+                "gap_type": "AMBIGUOUS_MATCH",
+                "reason": "Multiple possible matches found. Query is underspecified.",
+                "query": query
+            }
+            return payload
+
+        # -------------------------
+        # Case 3: Capability gap
+        # -------------------------
+        unsupported_keywords = ["price", "delay", "status", "cancel", "weather"]
+        if any(k in query.lower() for k in unsupported_keywords):
+            payload["gap_report"] = {
+                "gap_type": "CAPABILITY_GAP",
+                "reason": "The system does not support this type of information.",
+                "query": query
+            }
+            return payload
+
+        # -------------------------
+        # Otherwise: No gap detected
+        # -------------------------
+        return payload
