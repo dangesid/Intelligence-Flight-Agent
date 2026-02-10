@@ -3,7 +3,7 @@ import os
 from src.vector_store import FlightVectorStore
 
 # DEFAULTS
-DEFAULT_CSV = os.path.join("data", "flights.csv")  # default CSV file path
+DEFAULT_CSV = os.path.join("data", "flight_data.csv")  # default CSV file path
 DEFAULT_COLLECTION = "default"
 DEFAULT_BATCH_SIZE = 500
 
