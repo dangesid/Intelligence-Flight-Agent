@@ -1,20 +1,24 @@
 from typing import List, Dict, Any
 from src.agents.base_agent import BaseAgent
+from src.utils.embeddings import EmbeddingService
 
 
 class Orchestrator:
     """
     Autonomous agent orchestrator.
 
+    Principles:
     - No routing logic
     - No hardcoded order dependency
     - Agents decide when to act
+    - Shared mutable payload
     - Runs until system stabilizes
     """
 
     def __init__(self, agents: List[BaseAgent], max_iterations: int = 10):
         self.agents = agents
         self.max_iterations = max_iterations
+        self.embedding_service = EmbeddingService()
 
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         iteration = 0

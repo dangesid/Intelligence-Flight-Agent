@@ -1,0 +1,64 @@
+{
+  "knowledge_gaps": [
+    {
+      "question": "Is there immigration control on Pluto?",
+      "system_answer": null,
+      "gap_reason": "The retrieved documents appear to be flight itineraries, which do not contain information about immigration control on Pluto.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "The retrieved documents appear to be flight itineraries, which do not contain information about immigration control on Pluto.",
+        "recommended_data_to_add": []
+      }
+    },
+    {
+      "question": "Give me flight information to Banglore",
+      "system_answer": null,
+      "gap_reason": "The retrieved documents are not relevant to answering the query because they do not match the requested destination, Bangalore (BLR). The documents are related to destinations HYD and CCU.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "The retrieved documents are not relevant to answering the query because they do not match the requested destination, Bangalore (BLR). The documents are related to destinations HYD and CCU.",
+        "recommended_data_to_add": []
+      }
+    },
+    {
+      "question": "Give me flight information from banglore ?",
+      "system_answer": null,
+      "gap_reason": "LLM validation failed to parse.",
+      "severity": "medium",
+      "llm_analysis": {
+        "knowledge_gap": "LLM validation failed to parse.",
+        "recommended_data_to_add": []
+      }
+    },
+    {
+      "question": "Is there any Immigration checks required while travelling to Pluto ?",
+      "system_answer": null,
+      "gap_reason": "No records of immigration checks required for travel to Pluto, as Pluto is a dwarf planet and not a destination for human travel.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "No records of immigration checks required for travel to Pluto, as Pluto is a dwarf planet and not a destination for human travel.",
+        "recommended_data_to_add": []
+      }
+    },
+    {
+      "question": "Give me information about the National Highway 34 in India?",
+      "system_answer": null,
+      "gap_reason": "No information provided about National Highway 34 in India",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "No information provided about National Highway 34 in India",
+        "recommended_data_to_add": []
+      }
+    },
+    {
+      "question": "Give me information about National Highways of India ?",
+      "system_answer": "Data not available. The provided data only contains information about flights and does not contain any information related to National Highways of India.",
+      "gap_reason": "No direct information about National Highways of India in provided context.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "No direct information about National Highways of India in provided context.",
+        "recommended_data_to_add": []
+      }
+    }
+  ]
+}

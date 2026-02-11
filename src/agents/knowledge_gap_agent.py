@@ -1,79 +1,84 @@
-from typing import Dict, Any, List
+from typing import Dict, Any
 from src.agents.base_agent import BaseAgent
 
 
 class KnowledgeGapAgent(BaseAgent):
     """
-    Autonomous Knowledge Gap Detection Agent
-
-    Responsibilities:
-    - Inspect retrieval results
-    - Decide if information is insufficient, ambiguous, or out-of-domain
-    - Produce a structured gap_report
-    - Never block other agents explicitly
+    Detects knowledge gaps by validating whether retrieved context
+    is actually relevant to the user's query.
     """
 
+    def __init__(self, llm_client):
+        super().__init__()
+        self.llm = llm_client
+
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        """
-        Run if:
-        - A query exists
-        - Retrieval has already happened
-        - No final answer has been produced yet
-        """
-        return (
-            "query" in payload
-            and "retrieved_docs" in payload
-            and "answer" not in payload
-            and "gap_report" not in payload
-        )
+        # Only run if we have a query and retrieved context
+        return "query" in payload and "context" in payload
 
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        query: str = payload.get("query", "")
-        docs: List[str] = payload.get("retrieved_docs", [])
-        intent = payload.get("intent", {})
+        query = payload.get("query", "")
+        context = payload.get("context", "")
 
-        # -------------------------
-        # Case 1: No data at all
-        # -------------------------
-        if not docs:
-            payload["gap_report"] = {
-                "gap_type": "NO_DATA",
-                "reason": "No relevant documents were found for this query.",
-                "query": query
+        # 🚨 Case 1: Nothing retrieved
+        if not context:
+            payload["gap_signal"] = {
+                "reason": "No documents retrieved from knowledge base.",
+                "severity": "high"
             }
+            payload["missing_knowledge"] = "Relevant domain knowledge not present in vector store."
             return payload
 
-        # -------------------------
-        # Case 2: Too generic / ambiguous
-        # -------------------------
-        unique_signals = set()
-        for doc in docs:
-            parts = doc.split(",")
-            for p in parts:
-                if "from" in p.lower() or "to" in p.lower():
-                    unique_signals.add(p.strip())
+        prompt = f"""
+    You are a strict JSON validation engine.
 
-        if len(unique_signals) > 5:
-            payload["gap_report"] = {
-                "gap_type": "AMBIGUOUS_MATCH",
-                "reason": "Multiple possible matches found. Query is underspecified.",
-                "query": query
+    User Query:
+    {query}
+
+    Retrieved Context:
+    {context}
+
+    Return STRICT JSON only. No explanation. No markdown.
+
+    {{
+    "relevant": true or false,
+    "answerable": true or false,
+    "reason": "short explanation",
+    "severity": "low" | "medium" | "high",
+    "missing_knowledge": "what is missing"
+    }}
+    """
+
+        raw_response = self.llm.generate(prompt)
+
+        import json
+        import re
+
+        try:
+            match = re.search(r"\{.*", raw_response, re.DOTALL)
+            if not match:
+                raise ValueError("No JSON found")
+
+            json_str = match.group()
+
+            # 🔥 Auto-fix missing closing brace
+            if not json_str.strip().endswith("}"):
+                json_str = json_str.strip() + "}"
+
+            result = json.loads(json_str)
+        except Exception:
+            print("⚠️ LLM RAW OUTPUT (Parsing Failed):")
+            print(raw_response)
+
+            # ⚠️ IMPORTANT: Do NOT treat parse failure as real gap
+            return payload  # Just continue without creating gap_signal
+
+        # Only create gap if actually not relevant or not answerable
+        if not result.get("relevant", True) or not result.get("answerable", True):
+            payload["gap_signal"] = {
+                "reason": result.get("reason"),
+                "severity": result.get("severity", "medium")
             }
-            return payload
+            payload["missing_knowledge"] = result.get("missing_knowledge")
 
-        # -------------------------
-        # Case 3: Capability gap
-        # -------------------------
-        unsupported_keywords = ["price", "delay", "status", "cancel", "weather"]
-        if any(k in query.lower() for k in unsupported_keywords):
-            payload["gap_report"] = {
-                "gap_type": "CAPABILITY_GAP",
-                "reason": "The system does not support this type of information.",
-                "query": query
-            }
-            return payload
-
-        # -------------------------
-        # Otherwise: No gap detected
-        # -------------------------
         return payload
