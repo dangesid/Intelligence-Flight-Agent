@@ -1,49 +1,41 @@
-from typing import List, Dict, Any
-from src.agents.base_agent import BaseAgent
-from src.utils.embeddings import EmbeddingService
+import json
 
 
 class Orchestrator:
-    """
-    Autonomous agent orchestrator.
-
-    Principles:
-    - No routing logic
-    - No hardcoded order dependency
-    - Agents decide when to act
-    - Shared mutable payload
-    - Runs until system stabilizes
-    """
-
-    def __init__(self, agents: List[BaseAgent], max_iterations: int = 10):
+    def __init__(self, agents, max_iterations: int = 10):
         self.agents = agents
         self.max_iterations = max_iterations
-        self.embedding_service = EmbeddingService()
 
-    def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        iteration = 0
-        agent_ran = True
+    def run(self, payload: dict):
+        iterations = 0
+        completed = False
 
-        while agent_ran and iteration < self.max_iterations:
-            agent_ran = False
-            iteration += 1
+        while iterations < self.max_iterations:
+            iterations += 1
+            handled = False
 
             for agent in self.agents:
-                try:
-                    if agent.can_handle(payload):
-                        payload = agent.run(payload)
-                        agent_ran = True
-                except Exception as e:
-                    payload.setdefault("errors", []).append({
-                        "agent": agent.__class__.__name__,
-                        "error": str(e)
-                    })
-            if payload.get("finalized"):
+                if agent.can_handle(payload):
+                    print(f"⚙ Running agent: {agent.__class__.__name__}")
+                    payload = agent.run(payload)
+                    handled = True
+                    break  # Move to next iteration after one agent runs
+
+            # If finalizer marked completion → stop loop
+            if payload.get("finalized") is True:
+                completed = True
                 break
-            
-        payload["orchestration"] = {
-            "iterations": iteration,
-            "completed": not agent_ran
-        }
+
+            # If no agent handled → stop
+            if not handled:
+                break
+
+        # Save final output if exists
+        if payload.get("final_output"):
+            with open("system_state.json", "w") as f:
+                json.dump(payload["final_output"], f, indent=4)
+
+        print("\n🧬 Orchestration Trace (debug only):")
+        print({"iterations": iterations, "completed": completed})
 
         return payload

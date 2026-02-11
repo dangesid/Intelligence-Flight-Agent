@@ -14,8 +14,12 @@ class KnowledgeGapAgent(BaseAgent):
         self.llm = llm_client
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        # Only run if we have a query and retrieved context
-        return "query" in payload and "context" in payload
+        # Only run if we have a query, context, and haven't already run
+        return (
+            "query" in payload
+            and "context" in payload
+            and not payload.get("_knowledge_gap_done", False)
+        )
 
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         query = payload.get("query", "")
@@ -29,6 +33,7 @@ class KnowledgeGapAgent(BaseAgent):
             }
             payload["missing_knowledge"] = "Relevant domain knowledge not present in vector store."
             payload["llm_analysis"] = None
+            payload["_knowledge_gap_done"] = True
             return payload
 
         # Case 2: Run LLM validation
@@ -69,31 +74,32 @@ Return STRICT JSON only. No explanation. No markdown.
             result = json.loads(json_str)
 
         except Exception:
-            # Parsing failed → still create a generic gap
             payload["gap_signal"] = {
                 "reason": "LLM failed to validate relevance.",
                 "severity": "medium"
             }
             payload["missing_knowledge"] = "Unable to determine missing knowledge due to LLM parse failure."
             payload["llm_analysis"] = raw_response
+            payload["_knowledge_gap_done"] = True
             return payload
 
         # Store LLM analysis
         payload["llm_analysis"] = result
 
-        # Create gap only if not relevant or not answerable
-        if not result.get("relevant", True) or not result.get("answerable", True):
+        # Only log gap if severity is medium/high
+        severity = result.get("severity", "low")
+        if severity in ["medium", "high"] or not result.get("relevant", True) or not result.get("answerable", True):
             payload["gap_signal"] = {
                 "reason": result.get("reason", "Unknown reason"),
-                "severity": result.get("severity", "medium")
+                "severity": severity
             }
             payload["missing_knowledge"] = result.get("missing_knowledge", "Knowledge not available")
         else:
-            # Optional: mark as low severity if relevant and answerable
-            payload["gap_signal"] = {
-                "reason": result.get("reason", "Context is sufficient"),
-                "severity": result.get("severity", "low")
-            }
+            # No significant gap
+            payload["gap_signal"] = None
             payload["missing_knowledge"] = None
+
+        # Mark agent as done
+        payload["_knowledge_gap_done"] = True
 
         return payload

@@ -1,96 +1,161 @@
-{
-  "knowledge_gaps": [
-    {
-      "question": "Is there immigration control on Pluto?",
-      "system_answer": null,
-      "gap_reason": "The retrieved documents appear to be flight itineraries, which do not contain information about immigration control on Pluto.",
-      "severity": "high",
-      "llm_analysis": {
-        "knowledge_gap": "The retrieved documents appear to be flight itineraries, which do not contain information about immigration control on Pluto.",
-        "recommended_data_to_add": []
-      }
-    },
-    {
-      "question": "Give me flight information to Banglore",
-      "system_answer": null,
-      "gap_reason": "The retrieved documents are not relevant to answering the query because they do not match the requested destination, Bangalore (BLR). The documents are related to destinations HYD and CCU.",
-      "severity": "high",
-      "llm_analysis": {
-        "knowledge_gap": "The retrieved documents are not relevant to answering the query because they do not match the requested destination, Bangalore (BLR). The documents are related to destinations HYD and CCU.",
-        "recommended_data_to_add": []
-      }
-    },
-    {
-      "question": "Give me flight information from banglore ?",
-      "system_answer": null,
-      "gap_reason": "LLM validation failed to parse.",
-      "severity": "medium",
-      "llm_analysis": {
-        "knowledge_gap": "LLM validation failed to parse.",
-        "recommended_data_to_add": []
-      }
-    },
-    {
-      "question": "Is there any Immigration checks required while travelling to Pluto ?",
-      "system_answer": null,
-      "gap_reason": "No records of immigration checks required for travel to Pluto, as Pluto is a dwarf planet and not a destination for human travel.",
-      "severity": "high",
-      "llm_analysis": {
-        "knowledge_gap": "No records of immigration checks required for travel to Pluto, as Pluto is a dwarf planet and not a destination for human travel.",
-        "recommended_data_to_add": []
-      }
-    },
-    {
-      "question": "Give me information about the National Highway 34 in India?",
-      "system_answer": null,
-      "gap_reason": "No information provided about National Highway 34 in India",
-      "severity": "high",
-      "llm_analysis": {
-        "knowledge_gap": "No information provided about National Highway 34 in India",
-        "recommended_data_to_add": []
-      }
-    },
-    {
-      "question": "Give me information about National Highways of India ?",
-      "system_answer": "Data not available. The provided data only contains information about flights and does not contain any information related to National Highways of India.",
-      "gap_reason": "No direct information about National Highways of India in provided context.",
-      "severity": "low",
-      "llm_analysis": {
-        "knowledge_gap": "No direct information about National Highways of India in provided context.",
-        "recommended_data_to_add": []
-      }
-    },
-    {
-      "question": "List all the flights from Bombay ?",
-      "system_answer": "Data not available. There is no information about flights from Bombay in the provided data. The given data only provides information about flights from BLR (likely Bangalore) to DEL (likely Delhi).",
-      "gap_reason": "No flights found for 'Bombay' as it's not a valid IATA airport code. The correct airport code for Mumbai is BOM.",
-      "severity": "high",
-      "llm_analysis": {
-        "knowledge_gap": "No flights found for 'Bombay' as it's not a valid IATA airport code. The correct airport code for Mumbai is BOM.",
-        "recommended_data_to_add": []
-      }
-    },
-    {
-      "question": "GIve me information about the flights from London ?",
-      "system_answer": "Data not available. There is no information provided about flights from London. The data only contains information about flights between DEL and BLR, with no mention of London.",
-      "gap_reason": "no information about flights from London was found in the retrieved context",
-      "severity": "high",
-      "missing_knowledge": "flights from London",
-      "llm_analysis": {
-        "knowledge_gap": "no information about flights from London was found in the retrieved context",
-        "recommended_data_to_add": []
-      }
-    },
-    {
-      "question": "Is there immigration control on Pluto?",
-      "system_answer": "Data not available. The provided data does not contain any information about immigration control on Pluto or any other planet, as it only contains details about flights from HYD to CCU.",
-      "gap_reason": "No information about Pluto immigration control is present in the provided context.",
-      "severity": "high",
-      "missing_knowledge": "Information about Pluto immigration control",
-      "llm_analysis": {
-        "knowledge_gap": "No information about Pluto immigration control is present in the provided context.",
-        "recommended_data_to_add": []
-      }
+[
+  {
+    "question": "Is there immigration control on Pluto?",
+    "system_answer": null,
+    "gap_reason": "The retrieved documents appear to be flight itineraries, which do not contain information about immigration control on Pluto.",
+    "severity": "high",
+    "llm_analysis": {
+      "knowledge_gap": "The retrieved documents appear to be flight itineraries, which do not contain information about immigration control on Pluto.",
+      "recommended_data_to_add": []
     }
-  ]
-}
+  },
+  {
+    "question": "Give me flight information to Banglore",
+    "system_answer": null,
+    "gap_reason": "The retrieved documents are not relevant to answering the query because they do not match the requested destination, Bangalore (BLR). The documents are related to destinations HYD and CCU.",
+    "severity": "high",
+    "llm_analysis": {
+      "knowledge_gap": "The retrieved documents are not relevant to answering the query because they do not match the requested destination, Bangalore (BLR). The documents are related to destinations HYD and CCU.",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "Give me flight information from banglore ?",
+    "system_answer": null,
+    "gap_reason": "LLM validation failed to parse.",
+    "severity": "medium",
+    "llm_analysis": {
+      "knowledge_gap": "LLM validation failed to parse.",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "Is there any Immigration checks required while travelling to Pluto ?",
+    "system_answer": null,
+    "gap_reason": "No records of immigration checks required for travel to Pluto, as Pluto is a dwarf planet and not a destination for human travel.",
+    "severity": "high",
+    "llm_analysis": {
+      "knowledge_gap": "No records of immigration checks required for travel to Pluto, as Pluto is a dwarf planet and not a destination for human travel.",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "Give me information about the National Highway 34 in India?",
+    "system_answer": null,
+    "gap_reason": "No information provided about National Highway 34 in India",
+    "severity": "high",
+    "llm_analysis": {
+      "knowledge_gap": "No information provided about National Highway 34 in India",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "Give me information about National Highways of India ?",
+    "system_answer": "Data not available. The provided data only contains information about flights and does not contain any information related to National Highways of India.",
+    "gap_reason": "No direct information about National Highways of India in provided context.",
+    "severity": "low",
+    "llm_analysis": {
+      "knowledge_gap": "No direct information about National Highways of India in provided context.",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "List all the flights from Bombay ?",
+    "system_answer": "Data not available. There is no information about flights from Bombay in the provided data. The given data only provides information about flights from BLR (likely Bangalore) to DEL (likely Delhi).",
+    "gap_reason": "No flights found for 'Bombay' as it's not a valid IATA airport code. The correct airport code for Mumbai is BOM.",
+    "severity": "high",
+    "llm_analysis": {
+      "knowledge_gap": "No flights found for 'Bombay' as it's not a valid IATA airport code. The correct airport code for Mumbai is BOM.",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "GIve me information about the flights from London ?",
+    "system_answer": "Data not available. There is no information provided about flights from London. The data only contains information about flights between DEL and BLR, with no mention of London.",
+    "gap_reason": "no information about flights from London was found in the retrieved context",
+    "severity": "high",
+    "missing_knowledge": "flights from London",
+    "llm_analysis": {
+      "knowledge_gap": "no information about flights from London was found in the retrieved context",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "Is there immigration control on Pluto?",
+    "system_answer": "Data not available. The provided data does not contain any information about immigration control on Pluto or any other planet, as it only contains details about flights from HYD to CCU.",
+    "gap_reason": "No information about Pluto immigration control is present in the provided context.",
+    "severity": "high",
+    "missing_knowledge": "Information about Pluto immigration control",
+    "llm_analysis": {
+      "knowledge_gap": "No information about Pluto immigration control is present in the provided context.",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "Givee me information about flight to Pune",
+    "system_answer": "Data not available. There is no information provided about a flight to Pune (COK) in the given data. The destinations mentioned are BLR (which is likely Bengaluru or some other city, as there are multiple flights between COK and BLR).",
+    "gap_reason": "No information provided about Pune flight",
+    "severity": "high",
+    "missing_knowledge": "Pune flight details",
+    "llm_analysis": {
+      "knowledge_gap": "No information provided about Pune flight",
+      "recommended_data_to_add": []
+    }
+  },
+  {
+    "question": "Give me information about the flights from Pune ?",
+    "system_answer": "Data not available. There is no information provided about flights from Pune. The given data only includes information about flights between BLR and COK.",
+    "gap_reason": "No flights from Pune (PNQ) present in the retrieved data; all entries are from BLR to COK, so the query cannot be answered.",
+    "severity": "high",
+    "missing_knowledge": "Flight options from PNQ (Pune) to a specified destination and date range; need PNQ-origin data or clarification of destination/dates.",
+    "llm_analysis": {
+      "relevant": false,
+      "answerable": false,
+      "reason": "No flights from Pune (PNQ) present in the retrieved data; all entries are from BLR to COK, so the query cannot be answered.",
+      "severity": "high",
+      "missing_knowledge": "Flight options from PNQ (Pune) to a specified destination and date range; need PNQ-origin data or clarification of destination/dates."
+    }
+  },
+  {
+    "question": "Information about the flights from BLR ?",
+    "system_answer": "The following information is available for flights from BLR:\n\n* Destination: PNQ and DEL\n* Dates: 2026-02-13\n* Departure times: 22:30:00, 06:40:00, 10:30:00 (twice), 13:35:00\n* Arrival times: 06:30:00, 12:15:00, 16:55:00, 19:55:00, 17:10:00\n* Duration: PT8H, PT5H35M, PT6H25M, PT6H20M, PT6H40M\n* Price: 155.5 EUR, 164.52 EUR, 163.47 EUR (twice), 172.92 EUR\n* Currency: EUR\n* Airline: AI\n* Stops: 1",
+    "gap_reason": "The retrieved context lists BLR-origin flights to PNQ and DEL on 2026-02-13 with times, duration, price, currency, airline, and stops.",
+    "severity": "low",
+    "missing_knowledge": null,
+    "llm_analysis": {
+      "relevant": true,
+      "answerable": true,
+      "reason": "The retrieved context lists BLR-origin flights to PNQ and DEL on 2026-02-13 with times, duration, price, currency, airline, and stops.",
+      "severity": "low",
+      "missing_knowledge": "The context only covers BLR->PNQ and BLR->DEL on 2026-02-13 with AI, 1 stop. It does not include other BLR destinations, other dates, other airlines, non-stop flights, or additional metadata."
+    }
+  },
+  {
+    "question": "Give me flights from BLR ?",
+    "system_answer": "Here are the flights from BLR:\n\n* BLR to DEL, date: 2026-02-13, departure_time: 10:30:00, arrival_time: 17:10:00, duration: PT6H40M, price: 163.47, currency: EUR, airline: AI, stops: 1\n* BLR to DEL, date: 2026-02-13, departure_time: 06:40:00, arrival_time: 12:15:00, duration: PT5H35M, price: 164.52, currency: EUR, airline: AI, stops: 1\n* BLR to DEL, date: 2026-02-13, departure_time: 08:25:00, arrival_time: 14:05:00, duration: PT5H40M, price: 145.62, currency: EUR, airline: AI, stops: 1\n* BLR to HYD, date: 2026-02-13, departure_time: 13:45:00, arrival_time: 19:35:00, duration: PT5H50M, price: 116.65, currency: EUR, airline: AI, stops: 1\n* BLR to HYD, date: 2026-02-13, departure_time: 22:45:00, arrival_time: 07:25:00, duration: PT8H40M, price: 126.1, currency: EUR, airline: AI, stops: 1",
+    "gap_reason": null,
+    "severity": null,
+    "missing_knowledge": null,
+    "llm_analysis": {
+      "relevant": true,
+      "answerable": true,
+      "reason": "Context contains flights departing from BLR (to DEL and HYD).",
+      "severity": "low",
+      "missing_knowledge": "none"
+    }
+  },
+  {
+    "question": "Information about the Flight from los angeles ?",
+    "system_answer": "Data not available. There is no information provided about a flight from Los Angeles (or any other destination except HYD and DEL). The data only includes flights with these two destinations on specific dates, times, and airlines.",
+    "gap_reason": "The retrieved context contains flights only between HYD and DEL. No flights from Los Angeles (LAX) are present.",
+    "severity": "high",
+    "missing_knowledge": "Flight data from Los Angeles (LAX) to the requested destination(s) for the specified date range. The dataset does not include any origin/destination data for Los Angeles.",
+    "llm_analysis": {
+      "relevant": false,
+      "answerable": false,
+      "reason": "The retrieved context contains flights only between HYD and DEL. No flights from Los Angeles (LAX) are present.",
+      "severity": "high",
+      "missing_knowledge": "Flight data from Los Angeles (LAX) to the requested destination(s) for the specified date range. The dataset does not include any origin/destination data for Los Angeles."
+    }
+  }
+]
