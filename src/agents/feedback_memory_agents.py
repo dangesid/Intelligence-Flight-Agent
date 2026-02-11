@@ -18,80 +18,91 @@ class FeedbackMemoryAgent(BaseAgent):
         self.state_path = state_path
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        return "query" in payload and "gap_signal" in payload
+        # Only store gaps if gap_signal exists and feedback hasn't been captured
+        return "query" in payload and "gap_signal" in payload and "feedback_memory" not in payload
 
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         gap_signal = payload.get("gap_signal")
-
         if not gap_signal:
             return payload
 
-        print("\n🧠 [FeedbackMemoryAgent] Logging knowledge gap...")
+        # Generate LLM analysis of the gap
+        analysis = self._analyze_knowledge_gap(payload)
 
-        self._log_knowledge_gap(payload)
+        # Append gap to payload memory
+        payload.setdefault("knowledge_gaps", [])
+        payload["knowledge_gaps"].append({
+            "question": payload.get("query"),
+            "system_answer": payload.get("answer", {}).get("text"),
+            "gap_reason": gap_signal.get("reason"),
+            "severity": gap_signal.get("severity"),
+            "missing_knowledge": payload.get("missing_knowledge"),
+            "llm_analysis": analysis
+        })
 
+        # Persist to system_state.json
+        self._persist_to_system_state(payload["knowledge_gaps"])
+
+        # Mark feedback captured
         payload["feedback_memory"] = True
+
+        print("✅ Knowledge gap logged successfully.")
         return payload
 
     # ==========================================================
     # Internal helpers
     # ==========================================================
 
-    def _load_system_state(self) -> Dict[str, Any]:
-        if not os.path.exists(self.state_path):
-            return {"knowledge_gaps": []}
-
-        with open(self.state_path, "r") as f:
-            return json.load(f)
-
-    def _save_system_state(self, state: Dict[str, Any]):
-        with open(self.state_path, "w") as f:
-            json.dump(state, f, indent=2)
-
-    def _log_knowledge_gap(self, payload: Dict[str, Any]):
+    def _analyze_knowledge_gap(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Use LLM to suggest what knowledge is missing."""
         query = payload.get("query")
         answer = payload.get("answer", {}).get("text")
         gap_signal = payload.get("gap_signal", {})
 
         prompt = f"""
-    You are an AI system analyst helping improve a knowledge base.
+You are an AI system analyst helping improve a knowledge base.
 
-    User question:
-    {query}
+User question:
+{query}
 
-    System answer:
-    {answer}
+System answer:
+{answer}
 
-    Detected gap signal:
-    {gap_signal}
+Detected gap signal:
+{gap_signal}
 
-    Respond ONLY in JSON:
+Task:
+Respond ONLY in JSON with the following structure:
 
-    {{
-    "knowledge_gap": "<what is missing>",
-    "recommended_data_to_add": [
-        "<data type 1>",
-        "<data type 2>"
-    ]
-    }}
-    """
-
+{{
+  "knowledge_gap": "<what is missing>",
+  "recommended_data_to_add": [
+    "<data type 1>",
+    "<data type 2>"
+  ]
+}}
+"""
         try:
-            analysis = self.llm.generate_json(prompt)
+            return self.llm.generate_json(prompt)
         except Exception:
-            analysis = {
+            # fallback if LLM fails
+            return {
                 "knowledge_gap": gap_signal.get("reason", "Unknown"),
                 "recommended_data_to_add": []
             }
 
-        payload.setdefault("knowledge_gaps", [])
+    def _persist_to_system_state(self, knowledge_gaps: list):
+        """Append gaps to persistent system state."""
+        state = {"knowledge_gaps": []}
+        if os.path.exists(self.state_path):
+            try:
+                with open(self.state_path, "r") as f:
+                    state = json.load(f)
+            except Exception:
+                state = {"knowledge_gaps": []}
 
-        payload["knowledge_gaps"].append({
-            "question": query,
-            "system_answer": answer,
-            "gap_reason": gap_signal.get("reason"),
-            "severity": gap_signal.get("severity"),
-            "llm_analysis": analysis
-        })
+        state.setdefault("knowledge_gaps", [])
+        state["knowledge_gaps"].extend(knowledge_gaps)
 
-        print("✅ Knowledge gap added to payload memory")
+        with open(self.state_path, "w") as f:
+            json.dump(state, f, indent=2)

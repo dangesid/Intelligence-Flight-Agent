@@ -59,6 +59,38 @@
         "knowledge_gap": "No direct information about National Highways of India in provided context.",
         "recommended_data_to_add": []
       }
+    },
+    {
+      "question": "List all the flights from Bombay ?",
+      "system_answer": "Data not available. There is no information about flights from Bombay in the provided data. The given data only provides information about flights from BLR (likely Bangalore) to DEL (likely Delhi).",
+      "gap_reason": "No flights found for 'Bombay' as it's not a valid IATA airport code. The correct airport code for Mumbai is BOM.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "No flights found for 'Bombay' as it's not a valid IATA airport code. The correct airport code for Mumbai is BOM.",
+        "recommended_data_to_add": []
+      }
+    },
+    {
+      "question": "GIve me information about the flights from London ?",
+      "system_answer": "Data not available. There is no information provided about flights from London. The data only contains information about flights between DEL and BLR, with no mention of London.",
+      "gap_reason": "no information about flights from London was found in the retrieved context",
+      "severity": "high",
+      "missing_knowledge": "flights from London",
+      "llm_analysis": {
+        "knowledge_gap": "no information about flights from London was found in the retrieved context",
+        "recommended_data_to_add": []
+      }
+    },
+    {
+      "question": "Is there immigration control on Pluto?",
+      "system_answer": "Data not available. The provided data does not contain any information about immigration control on Pluto or any other planet, as it only contains details about flights from HYD to CCU.",
+      "gap_reason": "No information about Pluto immigration control is present in the provided context.",
+      "severity": "high",
+      "missing_knowledge": "Information about Pluto immigration control",
+      "llm_analysis": {
+        "knowledge_gap": "No information about Pluto immigration control is present in the provided context.",
+        "recommended_data_to_add": []
+      }
     }
   ]
 }

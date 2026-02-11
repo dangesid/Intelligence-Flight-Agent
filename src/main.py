@@ -76,6 +76,9 @@ def main():
 
     save_state(memory_to_save)
 
+    answer = result.get("answer", {})
+
+
     # 🧠 Answer
     print("\n🧠 Answer:")
     answer = result.get("answer", {})
@@ -84,12 +87,17 @@ def main():
 
     # 🧩 Knowledge gap signal
     if "gap_signal" in result:
-        print("\n🧩 Knowledge Gap Signal:")
-        print(result["gap_signal"])
+        gap = result["gap_signal"]
+        print("\n🧩 Knowledge Gap Detected:")
+        print(f"Reason       : {gap.get('reason')}")
+        print(f"Severity     : {gap.get('severity')}")
+        if result.get("missing_knowledge"):
+            print(f"Missing Info : {result.get('missing_knowledge')}")
 
-    # 🧬 Orchestration trace
-    print("\n🧬 Orchestration Trace:")
-    print(result.get("orchestration"))
+    # Optional: Orchestration trace for debugging
+    if result.get("orchestration"):
+        print("\n🧬 Orchestration Trace (debug only):")
+        print(result["orchestration"])
 
 
 if __name__ == "__main__":
