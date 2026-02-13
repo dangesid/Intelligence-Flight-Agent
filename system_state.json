@@ -16,6 +16,185 @@
           "Tidal interactions and Earth\u2013Moon dynamics (tidal locking, impact on Earth's rotation, angular momentum exchange)"
         ]
       }
+    },
+    {
+      "question": "give me information about Moon and Earth ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved context contains only flight-related documents and has no information about Moon or Earth.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "The knowledge base currently lacks any information about the Moon or Earth and contains only flight-related documents.",
+        "recommended_data_to_add": [
+          "Moon overview (size, distance from Earth, orbital period, surface features, composition, gravity, and phases)",
+          "Earth overview (size, mass, composition, atmosphere, hydrosphere, magnetic field, rotation, and habitability)",
+          "Earth\u2013Moon system dynamics (orbit around the common barycenter, tidal interactions, eclipses and lunar phases, synodic vs sidereal month)",
+          "Formation and evolution (origin theories such as the giant impact hypothesis and the early history of the Earth\u2013Moon system)",
+          "Space exploration and missions (Apollo program, lunar sample return missions, other national/international lunar missions, current and future plans)",
+          "Observational data and resources (phase calendars, orbital parameters, distance metrics, NASA/ESA fact sheets, and accessible data repositories for Moon and Earth)"
+        ]
+      }
+    },
+    {
+      "question": "give me flights from Ireland to Italy ?",
+      "system_answer": null,
+      "gap_reason": "Retrieved documents describe flights from Chennai to Delhi, not Ireland to Italy.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "The knowledge base lacks any results for flights from Ireland to Italy; current documents describe Chennai to Delhi flights, not relevant routes.",
+        "recommended_data_to_add": [
+          "Ireland-to-Italy flight route data (origin airports: Dublin, Cork, Shannon; destination airports: Rome Fiumicino, Milan Malpensa/Linate, Venice Marco Polo, Naples, Pisa, Bologna, Catania, etc.)",
+          "Flight schedules and pricing data from Irish airports to Italian airports, including typical carriers, transit options, durations, and seasonal variations",
+          "Integration with flight API sources (airline APIs, GDS like Amadeus/Travelport, flight aggregators) to fetch real-time availability and prices"
+        ]
+      }
+    },
+    {
+      "question": "List down flights between Paris and Moon ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved documents only contain flights from Pune to Kolkata. There is no information about flights between Paris and Moon.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "No data on any flights between Paris and Moon; the knowledge base only contains Pune to Kolkata flights, so the Paris\u2013Moon route is missing or not defined.",
+        "recommended_data_to_add": [
+          "Flight schedule data for Paris to Moon route (airlines, flight numbers, departure and arrival times, durations, frequencies).",
+          "Destination metadata for Moon and Paris including airport codes and status (whether there are any commercial flights to Moon; if not, specify that the route is not currently served)."
+        ]
+      }
+    },
+    {
+      "question": "GIve me flights between London and Moon ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved context contains only flights between Indian cities (Bangalore, Kolkata, Delhi); there is no information about flights between London and Moon.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "There is no data about a London\u2013Moon flight; the knowledge base currently contains only flights between Indian cities. Moon is not a recognized commercial flight destination in standard aviation datasets.",
+        "recommended_data_to_add": [
+          "Flight schedules and route data for London to Moon, including airline/operator, flight numbers, departure/arrival airports (or spaceport designations), frequency, duration, time zones, and aircraft/spaceflight type",
+          "Destination metadata for Moon (clarification if fictional or real): source or fictional universe, any standardized codes (IATA/ICAO-like) used, and details for spaceflight providers and orbital launch/landing windows if applicable"
+        ]
+      }
+    },
+    {
+      "question": "Give me information of flights from moon to Earth ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved context contains only Earth-bound flights between Indian cities; there is no information about any 'moon to Earth' flights.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "No information on flights from Moon to Earth; dataset only includes Earth-bound flights. Lunar-to-Earth flight data is missing.",
+        "recommended_data_to_add": [
+          "Lunar-to-Earth flight data (return trajectories) including mission type, launch/return windows, duration, and arrival timelines",
+          "Spaceflight mission catalogs and schedules for lunar return missions from space agencies and commercial operators (NASA/ESA/CNSA/other) including operators, spacecraft (e.g., Orion, lunar ascent/descent stages), and flight plans",
+          "Technical specifications and trajectory data for lunar return spacecraft, propulsion systems, re-entry profiles, and safety/landing parameters",
+          "Historical records of past lunar returns (Apollo missions, unmanned sample-return missions) and planned future lunar return missions (e.g., Artemis program) and associated mission metadata"
+        ]
+      }
+    },
+    {
+      "question": "Give me information about the flight between Earth and Moon ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved context only contains Earth-based commercial flights (e.g., Bangalore\u2013Kolkata, Bangalore\u2013Delhi) and has no information about Earth\u2013Moon flights.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "No data on flights between Earth and Moon; existing context only covers Earth-based commercial flights. Missing are historical and future lunar transport missions, flight profiles, vehicles, durations, and costs.",
+        "recommended_data_to_add": [
+          "Lunar flight history and future mission catalog (Apollo, Luna/Chang'e sample missions, Artemis program) including objectives and outcomes",
+          "Orbital mechanics and flight profiles for Earth\u2013Moon transfers (translunar injection, lunar orbit insertion, free-return trajectories, flight duration)",
+          "Space transportation vehicles and propulsion for Earth\u2013Moon travel (rocket stages, spacecraft, lunar landers, life-support systems)",
+          "Mission architectures, timelines, launch windows, and transit durations for typical Earth\u2013Moon missions",
+          "Cost, accessibility, and availability for civil or commercial lunar flights (pricing, seat availability, partnerships)",
+          "Safety, risk assessment, radiation shielding, life support, and contingency planning for long-duration crewed lunar missions",
+          "Regulatory, legal, and governance considerations (space treaties, licensing, export controls) governing Earth\u2013Moon flights"
+        ]
+      }
+    },
+    {
+      "question": "What is the difference between AI and ML and genAi ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved context discusses flights and does not contain information about AI, ML, or generative AI.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "The KB lacks any explanation of artificial intelligence (AI), machine learning (ML), and generative AI (GenAI), including definitions, how they differ and relate, and practical examples/use cases.",
+        "recommended_data_to_add": [
+          "Glossary and definitions for AI, ML, and GenAI",
+          "Comparative explanations and relationship diagrams showing differences and overlaps between AI, ML, and GenAI",
+          "Practical examples and use cases for AI, ML, and GenAI across industries",
+          "Common misconceptions, limitations, and safety/ethical considerations for AI/ML/GenAI"
+        ]
+      }
+    },
+    {
+      "question": "Difference between Java and Python ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved documents are about flight details and do not cover programming languages Java or Python.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "The documents do not cover programming languages Java and Python; missing a comparison of their features, use-cases, syntax, and ecosystems.",
+        "recommended_data_to_add": [
+          "Comparative overview article on Java vs Python",
+          "Side-by-side feature and performance table",
+          "Code examples demonstrating equivalent tasks in Java and Python",
+          "Use-case based guidance (web development, data science, scripting, enterprise apps)",
+          "Ecosystem and library support comparison (JUnit/Mockito vs PyTest, frameworks, tooling)"
+        ]
+      }
+    },
+    {
+      "question": "Difference between C and Java and Python ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved documents discuss flight details, not programming languages; there is no information about C, Java, or Python to answer the question.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "The system lacks any information about programming languages; no content comparing C, Java, and Python. Missing definitions, features, syntax, typing, memory management, execution model, performance, portability, ecosystems, and use-cases.",
+        "recommended_data_to_add": [
+          "Overview article comparing C, Java, and Python (high-level differences and common use cases)",
+          "Feature-by-feature matrix: typing discipline (static/dynamic), memory management (manual/garbage collection), compilation vs interpretation, platform portability",
+          "Syntax and basic program structure examples in C, Java, Python",
+          "Performance and efficiency benchmarks across typical tasks (e.g., loops, I/O, string handling)",
+          "Ecosystem and libraries overview for each language (standard libraries, common frameworks, tooling)",
+          "Best-use-case guidance and trade-offs for choosing each language in different scenarios",
+          "Official language references and learning resources (C ISO standard, Java SE documentation, Python official docs)"
+        ]
+      }
+    },
+    {
+      "question": "Difference between Ship and Truck ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved documents describe flights between Kochi and Indian cities; none discuss ships or trucks.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "The current data lacks any explanation or comparison between ships and trucks. It does not define what each modality is, their differences in capacity, speed, routes, costs, infrastructure, and typical use cases.",
+        "recommended_data_to_add": [
+          "Definitions and scope for Ship and Truck (what is considered a ship, what is considered a truck, typical sizes)",
+          "Key characteristics and carrying capacity (tonnage, container capacity, cargo types, handling requirements)",
+          "Performance metrics (speed, transit time, reliability, port/road constraints)",
+          "Cost structure and economics (capital and operating costs, fuel efficiency, tolls, crew, maintenance)",
+          "Infrastructure and network reach (port facilities, road networks, hinterland connections, intermodal terminals)",
+          "Environmental impact and emissions data (fuel types, CO2 per ton-km, pollution considerations)",
+          "Regulatory and safety considerations (licensing, safety regulations, permits, inspections)",
+          "Use-case scenarios and industries (bulk shipping, container, freight types, typical routes)",
+          "Pros and cons and suitability guidance for different contexts",
+          "Intermodal transfer considerations and integration with other modes"
+        ]
+      }
+    },
+    {
+      "question": "Give me difference between cow and dog ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved documents only contain flight information and do not cover cows or dogs.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "The current data lacks any information comparing cows and dogs; there is no content on biology, taxonomy, physical traits, behavior, or uses.",
+        "recommended_data_to_add": [
+          "Species profiles for cows and dogs (taxonomy and basic biology)",
+          "Comparative characteristics (physical traits, anatomy, senses, size, lifespan, domestication status)",
+          "Diet and nutrition requirements for cows and dogs",
+          "Habitats and typical environments; domestication and roles (livestock vs companion animal)",
+          "Behavior and social structure; temperament and trainability",
+          "Reproduction and life cycle (gestation, litter size, mating behavior)",
+          "Common health issues and veterinary care for cows and dogs",
+          "Economic and cultural significance and typical uses (milk/beef, labor vs companionship, service)"
+        ]
+      }
     }
   ],
   "active_vector_source": "COSMOS"
