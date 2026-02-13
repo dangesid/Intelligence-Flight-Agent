@@ -21,12 +21,10 @@ class Orchestrator:
                     handled = True
                     break  # Move to next iteration after one agent runs
 
-            # If finalizer marked completion → stop loop
             if payload.get("finalized") is True:
                 completed = True
                 break
 
-            # If no agent handled → stop
             if not handled:
                 break
 
@@ -35,7 +33,7 @@ class Orchestrator:
             with open("system_state.json", "w") as f:
                 json.dump(payload["final_output"], f, indent=4)
 
-        print("\n🧬 Orchestration Trace (debug only):")
-        print({"iterations": iterations, "completed": completed})
+        # Attach orchestration info to payload instead of printing here
+        payload["orchestration"] = {"iterations": iterations, "completed": completed}
 
         return payload

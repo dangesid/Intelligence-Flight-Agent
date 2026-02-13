@@ -25,7 +25,11 @@ class ClaraAgent:
         context = payload.get("context", "")
 
         if not context:
-            payload["answer"] = {"text": "Data not available.", "confidence": 0.0}
+            reason = (
+            "The system does not have any documents matching your query. "
+            "No relevant flight information is available in the vector store."
+        )
+            payload["answer"] = {"text": reason, "confidence": 0.7}
             payload["finalized"] = True
             return payload
 

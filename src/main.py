@@ -143,9 +143,9 @@ def main():
         VectorAgent(vector_store=vector_store),
         ContextBuilderAgent(),
         KnowledgeGapAgent(),
-        CoverageEvaluatorAgent(),
+        # CoverageEvaluatorAgent(),
         FeedbackMemoryAgent(state_path=str(STATE_FILE)),
-        IngestionPlannerAgent(),
+        # IngestionPlannerAgent(),
         ClaraAgent(),
         FinalizerAgent()
     ]
@@ -167,19 +167,35 @@ def main():
 
     # 🧠 Final Answer
     answer = result.get("answer", {})
-    print("\n🧠 Answer:")
-    print(answer.get("text", "No answer produced."))
-    print(f"\n🔐 Confidence: {answer.get('confidence', 0.0)}")
+    answer_text = answer.get("text", "No answer produced.")
+    confidence = answer.get("confidence", 0.0)
 
-    # 🧩 Knowledge gap signal
-    if result.get("gap_signal"):
-        print("\n🧩 Knowledge Gap Signal:")
-        print(result["gap_signal"])
+    gap_signal = result.get("gap_signal")
+    if "not available" in answer_text.lower() and gap_signal:
+        reason = gap_signal.get("reason", "No specific reason provided.")
+        answer_text += f" ⚠ Reason: {reason}"
 
-    # 🧬 Orchestration trace
-    print("\n🧬 Orchestration Trace:")
-    print(result.get("orchestration"))
+    # Print final answer
+    print(f"🧠 Answer:\n{answer_text}")
+    print(f"🔐 Confidence: {confidence}")
 
+    # 🧩 Knowledge gap signal (LLM-generated, if available)
+    gap_signal = result.get("gap_signal")
+    if gap_signal:
+        knowledge_gaps = result.get("knowledge_gaps", [])
+        llm_explanation = None
+        severity = gap_signal.get("severity", "N/A")
+
+        if knowledge_gaps:
+            last_gap = knowledge_gaps[-1]
+            llm_analysis = last_gap.get("llm_analysis", {})
+            llm_explanation = llm_analysis.get(
+                "knowledge_gap",
+                gap_signal.get("reason", "No explanation provided.")
+            )
+
+        print(f"🧩 Knowledge Gap Signal (LLM Explanation): {llm_explanation}")
+        print(f"Severity: {severity}")
 
 if __name__ == "__main__":
     main()

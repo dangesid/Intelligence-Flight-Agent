@@ -1,6 +1,7 @@
 # src/agents/feedback_memory_agents.py
 import os
 import json
+import re
 from typing import Dict, Any
 from src.agents.base_agent import BaseAgent
 from src.llm_clients.azure_openai_client import AzureOpenAIWrapper
@@ -90,12 +91,25 @@ Respond ONLY in JSON:
 }}
 """
         try:
-            # Use the wrapper's generate method correctly
+            # Use the wrapper's generate method
             response = self.llm.generate(messages=[HumanMessage(content=prompt)])
             
-            # Extract JSON from Azure response
+            # Extract JSON from LLM text safely
             json_text = response["choices"][0]["message"]["content"]
-            analysis_json = json.loads(json_text)
+            match = re.search(r"\{.*\}", json_text, flags=re.DOTALL)
+            if match:
+                try:
+                    analysis_json = json.loads(match.group())
+                except json.JSONDecodeError:
+                    analysis_json = {
+                        "knowledge_gap": gap_signal.get("reason", "Unknown"),
+                        "recommended_data_to_add": []
+                    }
+            else:
+                analysis_json = {
+                    "knowledge_gap": gap_signal.get("reason", "Unknown"),
+                    "recommended_data_to_add": []
+                }
             
         except Exception as e:
             print(f"⚠️ FeedbackMemoryAgent LLM Error: {e}")
