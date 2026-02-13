@@ -1,7 +1,7 @@
 from typing import List
 from langchain_community.llms import Ollama
 from src.llm_engine.base import BaseLLM
-from src.config import settings
+from src.config_ollama import settings
 import subprocess
 
 class OllamaWrapper(BaseLLM):

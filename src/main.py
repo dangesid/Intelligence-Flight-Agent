@@ -1,5 +1,6 @@
 # src/main.py
 import json
+import os
 from pathlib import Path
 from typing import Dict, Any
 
@@ -19,20 +20,50 @@ from src.orchestrator.orchestrator import Orchestrator
 
 # Vector Store
 from src.vector_store import FlightVectorStore
+from src.config import settings
 
-# 📦 Persistent system memory
+# ==================================================
+# 🔍 LLM Configuration Logger
+# ==================================================
+
+def log_llm_configuration():
+    provider = settings.LLM_PROVIDER.lower()
+
+    print("\n🤖 LLM CONFIGURATION")
+
+    if provider == "azure":
+        print("Provider: AZURE OPENAI")
+        print(f"Endpoint: {settings.AZURE_OPENAI_ENDPOINT}")
+        print(f"Deployment: {settings.AZURE_OPENAI_DEPLOYMENT}")
+        print(f"API Version: {settings.AZURE_OPENAI_API_VERSION}")
+
+    else:
+        print(f"Provider: {provider.upper()}")
+
+    print("")
+
+# ==================================================
+# 📦 Persistent System State (Memory + Active DB)
+# ==================================================
+
 STATE_FILE = Path("system_state.json")
 
 
 def load_state() -> Dict[str, Any]:
     """Load persistent system state safely and handle old formats."""
     if not STATE_FILE.exists():
-        return {"knowledge_gaps": []}
+        return {
+            "knowledge_gaps": [],
+            "active_vector_source": "COSMOS"
+        }
 
     try:
         content = STATE_FILE.read_text().strip()
         if not content:
-            return {"knowledge_gaps": []}
+            return {
+                "knowledge_gaps": [],
+                "active_vector_source": "COSMOS"
+            }
 
         state = json.loads(content)
 
@@ -40,45 +71,82 @@ def load_state() -> Dict[str, Any]:
         if isinstance(state, list):
             state = {"knowledge_gaps": state}
 
-        # Ensure key exists
-        if "knowledge_gaps" not in state or not isinstance(state["knowledge_gaps"], list):
+        if "knowledge_gaps" not in state:
             state["knowledge_gaps"] = []
 
+        if "active_vector_source" not in state:
+            state["active_vector_source"] = "COSMOS"
+
         return state
+
     except Exception:
-        return {"knowledge_gaps": []}
+        return {
+            "knowledge_gaps": [],
+            "active_vector_source": "COSMOS"
+        }
 
 
 def save_state(state: Dict[str, Any]):
-    """Save persistent state to disk safely."""
+    """Save persistent state safely."""
     STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
+# ==================================================
+# 🧠 Determine Active Vector DB
+# ==================================================
+
+def get_active_vector_path(state: Dict[str, Any]) -> str:
+    source = state.get("active_vector_source", "COSMOS")
+
+    if source == "COSMOS":
+        print("\n🌌 SYSTEM ACTIVE DB: COSMOS (Primary)\n")
+        return settings.VECTOR_DB_PATH_COSMOS
+
+    elif source == "CSV":
+        print("\n📄 SYSTEM ACTIVE DB: CSV (Fallback)\n")
+        return settings.VECTOR_DB_PATH_CSV
+
+    print("\n⚠️ Unknown DB source. Defaulting to COSMOS.\n")
+    return settings.VECTOR_DB_PATH_COSMOS
+
+
+# ==================================================
+# 🚀 MAIN
+# ==================================================
+
 def main():
+    log_llm_configuration()
+
     query = input("Ask a question: ").strip()
 
-    # ✅ Load persistent state safely
+    # Load persistent state
     persistent_state = load_state()
 
-    # ✅ Fresh payload per execution
+    # Determine correct vector DB path
+    vector_path = get_active_vector_path(persistent_state)
+
+    # Shared vector store (DO NOT reset in runtime)
+    vector_store = FlightVectorStore(
+        vector_db_path=vector_path,
+        reset_collection=False
+    )
+
+    # Payload
     payload = {
         "query": query,
         "knowledge_gaps": persistent_state.get("knowledge_gaps", [])
     }
 
-    # ✅ Initialize shared vector store once (efficient)
-    vector_store = FlightVectorStore()
-
-    # Initialize agents - each agent creates its own dependencies internally
+    # Initialize agents
     agents = [
-        QueryIntentAgent(),  # Creates its own AzureOpenAIWrapper internally
-        VectorAgent(vector_store=vector_store),  # Pass shared vector store
+        QueryIntentAgent(),
+        VectorAgent(vector_store=vector_store),
         ContextBuilderAgent(),
-        KnowledgeGapAgent(),  # Creates its own AzureOpenAIWrapper internally
+        KnowledgeGapAgent(),
         CoverageEvaluatorAgent(),
-        FeedbackMemoryAgent(state_path=str(STATE_FILE)),  # Only takes state_path
+        FeedbackMemoryAgent(state_path=str(STATE_FILE)),
         IngestionPlannerAgent(),
-        ClaraAgent(),  # Creates its own AzureOpenAIWrapper internally
+        ClaraAgent(),
         FinalizerAgent()
     ]
 
@@ -86,20 +154,25 @@ def main():
     orchestrator = Orchestrator(agents)
     result = orchestrator.run(payload)
 
-    # ✅ Persist ONLY long-term memory safely
-    memory_to_save = {
-        "knowledge_gaps": result.get("knowledge_gaps", [])
+    # Persist long-term memory + active DB source
+    updated_state = {
+        "knowledge_gaps": result.get("knowledge_gaps", []),
+        "active_vector_source": persistent_state.get(
+            "active_vector_source",
+            "COSMOS"
+        )
     }
-    save_state(memory_to_save)
 
-    # 🧠 Answer
+    save_state(updated_state)
+
+    # 🧠 Final Answer
     answer = result.get("answer", {})
     print("\n🧠 Answer:")
     print(answer.get("text", "No answer produced."))
     print(f"\n🔐 Confidence: {answer.get('confidence', 0.0)}")
 
     # 🧩 Knowledge gap signal
-    if "gap_signal" in result and result["gap_signal"]:
+    if result.get("gap_signal"):
         print("\n🧩 Knowledge Gap Signal:")
         print(result["gap_signal"])
 
