@@ -1,80 +1,60 @@
-from typing import Dict, Any, List
-from src.llm_engine.factory import get_llm
-from src.agents.base_agent import BaseAgent
+# src/agents/clara_agent.py
+from typing import Dict, Any
+from langchain_core.messages import HumanMessage
+from src.llm_clients.azure_openai_client import AzureOpenAIWrapper
 
 
-class ClaraAgent(BaseAgent):
-    """
-    CLARA – Controlled, Limited, Anchored Response Agent
-
-    FINAL ANSWER AGENT
-    - Runs once
-    - Produces answer OR refusal
-    - Terminates orchestration
-    - Fully grounded on provided context (retrieved_docs or gap_report)
-    """
-
-    def __init__(self, llm=None):
-        # Initialize LLM; can pass custom LLM instance
-        self.llm = llm or get_llm()
+class ClaraAgent:
+    def __init__(self):
+        # Use your custom wrapper instead of LangChain's AzureChatOpenAI
+        self.llm = AzureOpenAIWrapper()
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
         """
-        Clara runs ONLY if:
-        - Query exists
-        - System not finalized
-        - Either retrieved_docs OR gap_report exists
-        - No answer yet
+        ClaraAgent handles the query when:
+        1. Context has been retrieved (from RAG or other sources)
+        2. The query hasn't been finalized yet
         """
-        return (
-            "query" in payload
-            and not payload.get("finalized")
-            and "answer" not in payload
-            and (
-                payload.get("retrieved_docs") is not None
-                or payload.get("gap_report") is not None
-            )
-        )
+        has_context = bool(payload.get("context"))
+        not_finalized = not payload.get("finalized", False)
+        
+        return has_context and not_finalized
 
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        query: str = payload["query"]
-        docs: List[str] = payload.get("retrieved_docs", [])
-        gap_report = payload.get("gap_report")
+        query = payload["query"]
+        context = payload.get("context", "")
 
-        # 🚫 GAP RESPONSE (NO LLM)
-        if gap_report:
-            payload["answer"] = {
-                "text": gap_report.get(
-                    "message",
-                    "I cannot answer this question with the available data."
-                ),
-                "confidence": 0.2
-            }
+        if not context:
+            payload["answer"] = {"text": "Data not available.", "confidence": 0.0}
             payload["finalized"] = True
             return payload
 
-        # 📚 DOC-BASED ANSWER
-        if docs:
-            try:
-                response = self.llm.generate_with_context(
-                    query=query,
-                    documents=docs,
-                    instruction=(
-                        "Answer strictly using the provided data. "
-                        "If the information is not present, say 'Data not available'. "
-                        "Do NOT use any external knowledge or make assumptions."
-                    )
-                )
-            except Exception:
-                response = "Unable to generate an answer with the current data."
-        else:
-            response = "Data not available."
+        try:
+            # Build prompt with context
+            prompt = (
+                "You are a helpful flight assistant. "
+                "Answer strictly using the provided context. "
+                "If the information is not present, say 'Data not available'. "
+                "Do NOT use any external knowledge or make assumptions.\n\n"
+                f"Context:\n{context}\n\nQuestion:\n{query}"
+            )
 
-        payload["answer"] = {
-            "text": response.strip(),
-            "confidence": 0.7 if docs else 0.0
-        }
+            # Use your custom wrapper's generate method
+            response = self.llm.generate(messages=[HumanMessage(content=prompt)])
+            
+            # Extract text from the Azure response
+            # Azure returns: {"choices": [{"message": {"content": "..."}}]}
+            answer_text = response["choices"][0]["message"]["content"]
 
-        # ✅ TERMINATE SYSTEM
+        except Exception as e:
+            print(f"⚠ ClaraAgent LLM Error: {e}")
+            import traceback
+            traceback.print_exc()
+            answer_text = "Unable to generate an answer with the current data."
+
+        payload["answer"] = {"text": answer_text.strip(), "confidence": 0.7}
         payload["finalized"] = True
+
+        print("\n📝 Debug - Docs passed to ClaraAgent:")
+        print(context)
         return payload

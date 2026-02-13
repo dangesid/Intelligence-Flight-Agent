@@ -1,105 +1,76 @@
+# src/agents/knowledge_gap_agent.py
 from typing import Dict, Any
 from src.agents.base_agent import BaseAgent
+from src.llm_clients.azure_openai_client import AzureOpenAIWrapper
+from langchain_core.messages import HumanMessage
 import json
 import re
 
+
 class KnowledgeGapAgent(BaseAgent):
     """
-    Detects knowledge gaps by validating whether retrieved context
-    is relevant to the user's query using LLM.
+    Detects knowledge gaps by validating if retrieved context
+    is relevant to user's query using Azure GPT.
     """
 
-    def __init__(self, llm_client):
-        super().__init__()
-        self.llm = llm_client
+    def __init__(self):
+        # Create its own LLM instance
+        self.llm = AzureOpenAIWrapper()
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        # Only run if we have a query, context, and haven't already run
-        return (
-            "query" in payload
-            and "context" in payload
-            and not payload.get("_knowledge_gap_done", False)
-        )
+        return "query" in payload and "context" in payload and not payload.get("_knowledge_gap_done", False)
 
-    def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def run(self, payload: dict) -> dict:
         query = payload.get("query", "")
         context = payload.get("context", "")
 
-        # Case 1: Nothing retrieved
         if not context:
             payload["gap_signal"] = {
-                "reason": "No documents retrieved from knowledge base.",
-                "severity": "high"
+                "reason": "No relevant documents retrieved.",
+                "severity": "medium"
             }
-            payload["missing_knowledge"] = "Relevant domain knowledge not present in vector store."
-            payload["llm_analysis"] = None
             payload["_knowledge_gap_done"] = True
             return payload
 
-        # Case 2: Run LLM validation
-        prompt = f"""
-You are a strict JSON validation engine.
-
+        # Run LLM only if context exists
+        try:
+            prompt = f"""
+You are a strict JSON validator.
 User Query:
 {query}
 
 Retrieved Context:
 {context}
 
-Return STRICT JSON only. No explanation. No markdown.
-
-{{
-  "relevant": true or false,
-  "answerable": true or false,
-  "reason": "short explanation",
-  "severity": "low" | "medium" | "high",
-  "missing_knowledge": "what is missing"
-}}
+Return JSON:
+{{"relevant": true or false, "answerable": true or false, "reason": "...", "severity": "low|medium|high", "missing_knowledge": "..."}}
 """
+            # Use the wrapper's generate method correctly
+            response = self.llm.generate(messages=[HumanMessage(content=prompt)])
+            
+            # Extract JSON from Azure response
+            json_text = response["choices"][0]["message"]["content"]
+            result = json.loads(json_text)
+            
+            payload["llm_analysis"] = result
 
-        raw_response = self.llm.generate(prompt)
+            if not result.get("relevant", True) or not result.get("answerable", True):
+                payload["gap_signal"] = {
+                    "reason": result.get("reason", "Unknown"),
+                    "severity": result.get("severity", "medium")
+                }
+            else:
+                payload["gap_signal"] = None
 
-        try:
-            # Extract JSON from LLM output
-            match = re.search(r"\{.*", raw_response, re.DOTALL)
-            if not match:
-                raise ValueError("No JSON found")
-
-            json_str = match.group()
-
-            # Auto-fix missing closing brace
-            if not json_str.strip().endswith("}"):
-                json_str = json_str.strip() + "}"
-
-            result = json.loads(json_str)
-
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ KnowledgeGapAgent LLM Error: {e}")
+            import traceback
+            traceback.print_exc()
+            
             payload["gap_signal"] = {
                 "reason": "LLM failed to validate relevance.",
                 "severity": "medium"
             }
-            payload["missing_knowledge"] = "Unable to determine missing knowledge due to LLM parse failure."
-            payload["llm_analysis"] = raw_response
-            payload["_knowledge_gap_done"] = True
-            return payload
 
-        # Store LLM analysis
-        payload["llm_analysis"] = result
-
-        # Only log gap if severity is medium/high
-        severity = result.get("severity", "low")
-        if severity in ["medium", "high"] or not result.get("relevant", True) or not result.get("answerable", True):
-            payload["gap_signal"] = {
-                "reason": result.get("reason", "Unknown reason"),
-                "severity": severity
-            }
-            payload["missing_knowledge"] = result.get("missing_knowledge", "Knowledge not available")
-        else:
-            # No significant gap
-            payload["gap_signal"] = None
-            payload["missing_knowledge"] = None
-
-        # Mark agent as done
         payload["_knowledge_gap_done"] = True
-
         return payload

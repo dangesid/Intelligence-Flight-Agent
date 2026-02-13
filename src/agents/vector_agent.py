@@ -1,32 +1,25 @@
+# src/agents/vector_agent.py
 from typing import Dict, Any, List
 from src.agents.base_agent import BaseAgent
 from src.vector_store import FlightVectorStore
 
-
 class VectorAgent(BaseAgent):
     """
     Autonomous Vector Retrieval Agent
-
-    Responsibilities:
-    - Decide if vector retrieval is needed
-    - Perform semantic search
-    - Populate payload with retrieved docs, distances, metadata
-    - Make NO decisions about relevance or answers
     """
 
-    def __init__(self, vector_store: FlightVectorStore | None = None):
+    def __init__(
+        self,
+        vector_store: FlightVectorStore | None = None,
+        threshold: float = 0.6,  # slightly lower
+        top_n_fallback: int = 5,
+    ):
         self.vector_store = vector_store or FlightVectorStore()
+        self.threshold = threshold
+        self.top_n_fallback = top_n_fallback
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        """
-        Run if:
-        - A query exists
-        - Retrieval has not already been performed
-        """
-        return (
-            "query" in payload
-            and "retrieved_docs" not in payload
-        )
+        return "query" in payload and "retrieved_docs" not in payload
 
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         query: str = payload.get("query", "").strip()
@@ -45,14 +38,22 @@ class VectorAgent(BaseAgent):
             payload["metadatas"] = []
             return payload
 
-        docs, distances, metadatas = zip(*results)
+        # Filter by threshold
+        filtered_results = [(doc, dist, meta) for doc, dist, meta in results if dist <= self.threshold]
+
+        # Fallback to top N
+        if not filtered_results:
+            filtered_results = results[:self.top_n_fallback]
+
+        docs, distances, metadatas = zip(*filtered_results)
 
         payload["retrieved_docs"] = list(docs)
         payload["distances"] = list(distances)
         payload["metadatas"] = list(metadatas)
 
-        print("\n🔍 [VectorAgent] Retrieved Documents:")
+        print(f"\n🔍 [VectorAgent] Retrieved Documents (threshold={self.threshold}):")
         for i, (doc, dist) in enumerate(zip(docs, distances), start=1):
             print(f"[Doc {i}] Distance={dist:.3f} | {doc}")
 
+        print(f"Distances of all retrieved docs: {tuple(distances)}")
         return payload
