@@ -195,6 +195,33 @@
           "Economic and cultural significance and typical uses (milk/beef, labor vs companionship, service)"
         ]
       }
+    },
+    {
+      "question": "What is the distance between sun and Moon ?",
+      "system_answer": null,
+      "gap_reason": "The retrieved context contains only flight information and has no data about astronomy or distances between the Sun and the Moon.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "The knowledge base lacks astronomical data; there is no computed or cited Sun\u2013Moon distance, including its typical value or range and the factors that cause variation.",
+        "recommended_data_to_add": [
+          "Sun\u2013Moon distance data: numerical distance in kilometers and miles, including the average value (~149.6 million km) and the plausible range (roughly ~147\u2013153 million km) due to variations in Earth's orbit and the Moon's orbit.",
+          "Explanation and constants: definitions of astronomical units (AU), Moon's average distance from Earth (~384,400 km), and how to compute Sun\u2013Moon distance from Sun\u2013Earth and Earth\u2013Moon distance vectors."
+        ]
+      }
+    },
+    {
+      "question": "what is the distance between Sun and Moon ?",
+      "system_answer": null,
+      "gap_reason": "Retrieved documents contain only flight information between Pune, Kolkata, Delhi; none mention astronomical distances or Sun-Moon distance.",
+      "severity": "high",
+      "llm_analysis": {
+        "knowledge_gap": "No data on Sun\u2013Moon distance. Required knowledge includes average distance Sun\u2013Moon (approx Sun\u2013Earth distance minus Earth\u2013Moon distance) and its variation, plus how it's defined (line-of-sight distance, barycentric distances).",
+        "recommended_data_to_add": [
+          "Astronomical distance Sun\u2013Moon factual data (average distance, range, units)",
+          "Sun\u2013Earth distance (1 AU) and Earth\u2013Moon distance (semi-major axis)",
+          "Explanations of how Sun\u2013Moon distance varies with lunar phase and orbital geometry"
+        ]
+      }
     }
   ],
   "active_vector_source": "COSMOS"

@@ -1,6 +1,6 @@
 # src/main.py
+
 import json
-import os
 from pathlib import Path
 from typing import Dict, Any
 
@@ -9,21 +9,17 @@ from src.agents.query_intent_agent import QueryIntentAgent
 from src.agents.vector_agent import VectorAgent
 from src.agents.context_builder_agent import ContextBuilderAgent
 from src.agents.knowledge_gap_agent import KnowledgeGapAgent
-from src.agents.coverage_evaluator_agent import CoverageEvaluatorAgent
 from src.agents.feedback_memory_agents import FeedbackMemoryAgent
-from src.agents.ingestion_planner_agent import IngestionPlannerAgent
 from src.agents.clara_agent import ClaraAgent
 from src.agents.final_answer_agent import FinalizerAgent
 
-# Orchestrator
-from src.orchestrator.orchestrator import Orchestrator
-
-# Vector Store
+from src.orchestrator.orchestrator import build_graph
 from src.vector_store import FlightVectorStore
 from src.config import settings
 
+
 # ==================================================
-# 🔍 LLM Configuration Logger
+# LLM CONFIG LOGGER
 # ==================================================
 
 def log_llm_configuration():
@@ -36,63 +32,35 @@ def log_llm_configuration():
         print(f"Endpoint: {settings.AZURE_OPENAI_ENDPOINT}")
         print(f"Deployment: {settings.AZURE_OPENAI_DEPLOYMENT}")
         print(f"API Version: {settings.AZURE_OPENAI_API_VERSION}")
-
     else:
         print(f"Provider: {provider.upper()}")
 
     print("")
 
+
 # ==================================================
-# 📦 Persistent System State (Memory + Active DB)
+# STATE FILE
 # ==================================================
 
 STATE_FILE = Path("system_state.json")
 
 
 def load_state() -> Dict[str, Any]:
-    """Load persistent system state safely and handle old formats."""
     if not STATE_FILE.exists():
-        return {
-            "knowledge_gaps": [],
-            "active_vector_source": "COSMOS"
-        }
+        return {"knowledge_gaps": [], "active_vector_source": "COSMOS"}
 
     try:
-        content = STATE_FILE.read_text().strip()
-        if not content:
-            return {
-                "knowledge_gaps": [],
-                "active_vector_source": "COSMOS"
-            }
-
-        state = json.loads(content)
-
-        # Convert old list format to dict
-        if isinstance(state, list):
-            state = {"knowledge_gaps": state}
-
-        if "knowledge_gaps" not in state:
-            state["knowledge_gaps"] = []
-
-        if "active_vector_source" not in state:
-            state["active_vector_source"] = "COSMOS"
-
-        return state
-
+        return json.loads(STATE_FILE.read_text())
     except Exception:
-        return {
-            "knowledge_gaps": [],
-            "active_vector_source": "COSMOS"
-        }
+        return {"knowledge_gaps": [], "active_vector_source": "COSMOS"}
 
 
 def save_state(state: Dict[str, Any]):
-    """Save persistent state safely."""
     STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
 # ==================================================
-# 🧠 Determine Active Vector DB
+# ACTIVE DB
 # ==================================================
 
 def get_active_vector_path(state: Dict[str, Any]) -> str:
@@ -106,96 +74,78 @@ def get_active_vector_path(state: Dict[str, Any]) -> str:
         print("\n📄 SYSTEM ACTIVE DB: CSV (Fallback)\n")
         return settings.VECTOR_DB_PATH_CSV
 
-    print("\n⚠️ Unknown DB source. Defaulting to COSMOS.\n")
     return settings.VECTOR_DB_PATH_COSMOS
 
 
 # ==================================================
-# 🚀 MAIN
+# MAIN
 # ==================================================
 
 def main():
+
     log_llm_configuration()
 
     query = input("Ask a question: ").strip()
 
-    # Load persistent state
     persistent_state = load_state()
 
-    # Determine correct vector DB path
     vector_path = get_active_vector_path(persistent_state)
 
-    # Shared vector store (DO NOT reset in runtime)
     vector_store = FlightVectorStore(
         vector_db_path=vector_path,
         reset_collection=False
     )
 
-    # Payload
     payload = {
         "query": query,
         "knowledge_gaps": persistent_state.get("knowledge_gaps", [])
     }
 
-    # Initialize agents
     agents = [
         QueryIntentAgent(),
         VectorAgent(vector_store=vector_store),
         ContextBuilderAgent(),
         KnowledgeGapAgent(),
-        # CoverageEvaluatorAgent(),
         FeedbackMemoryAgent(state_path=str(STATE_FILE)),
-        # IngestionPlannerAgent(),
         ClaraAgent(),
         FinalizerAgent()
     ]
 
-    # Run orchestrator
-    orchestrator = Orchestrator(agents)
-    result = orchestrator.run(payload)
+    app = build_graph(agents)
 
-    # Persist long-term memory + active DB source
+    result = app.invoke(payload)
+
+    # ==================================================
+    # SAVE UPDATED STATE
+    # ==================================================
+
     updated_state = {
         "knowledge_gaps": result.get("knowledge_gaps", []),
         "active_vector_source": persistent_state.get(
-            "active_vector_source",
-            "COSMOS"
+            "active_vector_source", "COSMOS"
         )
     }
 
     save_state(updated_state)
 
-    # 🧠 Final Answer
+    # ==================================================
+    # PRINT FINAL OUTPUT
+    # ==================================================
+
     answer = result.get("answer", {})
     answer_text = answer.get("text", "No answer produced.")
     confidence = answer.get("confidence", 0.0)
 
-    gap_signal = result.get("gap_signal")
-    if "not available" in answer_text.lower() and gap_signal:
-        reason = gap_signal.get("reason", "No specific reason provided.")
-        answer_text += f" ⚠ Reason: {reason}"
+    print(f"\n🧠 Answer:\n{answer_text}")
+    print(f"\n🔐 Confidence: {confidence}")
 
-    # Print final answer
-    print(f"🧠 Answer:\n{answer_text}")
-    print(f"🔐 Confidence: {confidence}")
-
-    # 🧩 Knowledge gap signal (LLM-generated, if available)
     gap_signal = result.get("gap_signal")
+
     if gap_signal:
-        knowledge_gaps = result.get("knowledge_gaps", [])
-        llm_explanation = None
-        severity = gap_signal.get("severity", "N/A")
-
-        if knowledge_gaps:
-            last_gap = knowledge_gaps[-1]
-            llm_analysis = last_gap.get("llm_analysis", {})
-            llm_explanation = llm_analysis.get(
-                "knowledge_gap",
-                gap_signal.get("reason", "No explanation provided.")
-            )
-
-        print(f"🧩 Knowledge Gap Signal (LLM Explanation): {llm_explanation}")
-        print(f"Severity: {severity}")
+        print("\n🧩 Knowledge Gap Signal (LLM Explanation):")
+        print(gap_signal.get("llm_analysis", {}).get("knowledge_gap"))
+        print("Severity:", gap_signal.get("severity"))
+    
 
 if __name__ == "__main__":
     main()

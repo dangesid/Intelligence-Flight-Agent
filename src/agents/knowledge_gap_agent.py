@@ -1,10 +1,10 @@
 # src/agents/knowledge_gap_agent.py
+
 from typing import Dict, Any
 from src.agents.base_agent import BaseAgent
 from src.llm_clients.azure_openai_client import AzureOpenAIWrapper
 from langchain_core.messages import HumanMessage
 import json
-import re
 
 
 class KnowledgeGapAgent(BaseAgent):
@@ -14,63 +14,96 @@ class KnowledgeGapAgent(BaseAgent):
     """
 
     def __init__(self):
-        # Create its own LLM instance
         self.llm = AzureOpenAIWrapper()
 
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        return "query" in payload and "context" in payload and not payload.get("_knowledge_gap_done", False)
+        # 🔥 IMPORTANT: match orchestrator flag
+        return (
+            "query" in payload
+            and "context" in payload
+            and not payload.get("gap_checked", False)
+        )
 
     def run(self, payload: dict) -> dict:
+
         query = payload.get("query", "")
         context = payload.get("context", "")
 
+        # 🔥 CRITICAL: Prevent infinite loop
+        payload["gap_checked"] = True
+
+        # ---------------------------------------------------
+        # CASE 1: No Context Retrieved
+        # ---------------------------------------------------
         if not context:
             payload["gap_signal"] = {
                 "reason": "No relevant documents retrieved.",
-                "severity": "medium"
+                "severity": "medium",
+                "llm_analysis": {
+                    "knowledge_gap": "No documents were retrieved from the knowledge base.",
+                    "recommended_data_to_add": []
+                }
             }
-            payload["_knowledge_gap_done"] = True
             return payload
 
-        # Run LLM only if context exists
+        # ---------------------------------------------------
+        # CASE 2: Validate via LLM
+        # ---------------------------------------------------
         try:
             prompt = f"""
 You are a strict JSON validator.
+
 User Query:
 {query}
 
 Retrieved Context:
 {context}
 
-Return JSON:
-{{"relevant": true or false, "answerable": true or false, "reason": "...", "severity": "low|medium|high", "missing_knowledge": "..."}}
+Return ONLY valid JSON:
+{{
+  "relevant": true or false,
+  "answerable": true or false,
+  "reason": "...",
+  "severity": "low|medium|high",
+  "knowledge_gap": "...",
+  "recommended_data_to_add": ["item1", "item2"]
+}}
 """
-            # Use the wrapper's generate method correctly
-            response = self.llm.generate(messages=[HumanMessage(content=prompt)])
-            
-            # Extract JSON from Azure response
+
+            response = self.llm.generate(
+                messages=[HumanMessage(content=prompt)]
+            )
+
             json_text = response["choices"][0]["message"]["content"]
             result = json.loads(json_text)
-            
-            payload["llm_analysis"] = result
 
+            # If not relevant OR not answerable → GAP
             if not result.get("relevant", True) or not result.get("answerable", True):
+
                 payload["gap_signal"] = {
-                    "reason": result.get("reason", "Unknown"),
-                    "severity": result.get("severity", "medium")
+                    "reason": result.get("reason", "Unknown reason"),
+                    "severity": result.get("severity", "medium"),
+                    "llm_analysis": {
+                        "knowledge_gap": result.get("knowledge_gap", ""),
+                        "recommended_data_to_add": result.get(
+                            "recommended_data_to_add", []
+                        )
+                    }
                 }
+
             else:
                 payload["gap_signal"] = None
 
         except Exception as e:
             print(f"⚠️ KnowledgeGapAgent LLM Error: {e}")
-            import traceback
-            traceback.print_exc()
-            
+
             payload["gap_signal"] = {
                 "reason": "LLM failed to validate relevance.",
-                "severity": "medium"
+                "severity": "medium",
+                "llm_analysis": {
+                    "knowledge_gap": "LLM validation failure.",
+                    "recommended_data_to_add": []
+                }
             }
 
-        payload["_knowledge_gap_done"] = True
         return payload
