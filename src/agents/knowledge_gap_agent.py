@@ -1,11 +1,8 @@
-# src/agents/knowledge_gap_agent.py
-
 from typing import Dict, Any
 from src.agents.base_agent import BaseAgent
 from src.llm_clients.azure_openai_client import AzureOpenAIWrapper
 from langchain_core.messages import HumanMessage
 import json
-
 
 class KnowledgeGapAgent(BaseAgent):
     """
@@ -16,25 +13,28 @@ class KnowledgeGapAgent(BaseAgent):
     def __init__(self):
         self.llm = AzureOpenAIWrapper()
 
+    # -------------------
+    # Legacy routing
+    # -------------------
     def can_handle(self, payload: Dict[str, Any]) -> bool:
-        # 🔥 IMPORTANT: match orchestrator flag
         return (
             "query" in payload
             and "context" in payload
             and not payload.get("gap_checked", False)
         )
 
+    # -------------------
+    # Legacy execution
+    # -------------------
     def run(self, payload: dict) -> dict:
 
         query = payload.get("query", "")
         context = payload.get("context", "")
 
-        # 🔥 CRITICAL: Prevent infinite loop
+        # 🔥 Prevent infinite loop
         payload["gap_checked"] = True
 
-        # ---------------------------------------------------
-        # CASE 1: No Context Retrieved
-        # ---------------------------------------------------
+        # CASE 1: No context
         if not context:
             payload["gap_signal"] = {
                 "reason": "No relevant documents retrieved.",
@@ -46,9 +46,7 @@ class KnowledgeGapAgent(BaseAgent):
             }
             return payload
 
-        # ---------------------------------------------------
         # CASE 2: Validate via LLM
-        # ---------------------------------------------------
         try:
             prompt = f"""
 You are a strict JSON validator.
@@ -70,33 +68,24 @@ Return ONLY valid JSON:
 }}
 """
 
-            response = self.llm.generate(
-                messages=[HumanMessage(content=prompt)]
-            )
-
+            response = self.llm.generate(messages=[HumanMessage(content=prompt)])
             json_text = response["choices"][0]["message"]["content"]
             result = json.loads(json_text)
 
-            # If not relevant OR not answerable → GAP
             if not result.get("relevant", True) or not result.get("answerable", True):
-
                 payload["gap_signal"] = {
                     "reason": result.get("reason", "Unknown reason"),
                     "severity": result.get("severity", "medium"),
                     "llm_analysis": {
                         "knowledge_gap": result.get("knowledge_gap", ""),
-                        "recommended_data_to_add": result.get(
-                            "recommended_data_to_add", []
-                        )
+                        "recommended_data_to_add": result.get("recommended_data_to_add", [])
                     }
                 }
-
             else:
                 payload["gap_signal"] = None
 
         except Exception as e:
             print(f"⚠️ KnowledgeGapAgent LLM Error: {e}")
-
             payload["gap_signal"] = {
                 "reason": "LLM failed to validate relevance.",
                 "severity": "medium",
@@ -107,3 +96,17 @@ Return ONLY valid JSON:
             }
 
         return payload
+
+    # -------------------
+    # Agentic interface
+    # -------------------
+    def evaluate(self, state: dict) -> bool:
+        # run if context exists and gap not checked
+        return "query" in state and "context" in state and not state.get("gap_checked", False)
+
+    def propose_action(self, state: dict) -> str:
+        return self.__class__.__name__
+
+    def execute(self, state: dict) -> dict:
+        # ✅ Calls legacy run only once
+        return self.run(state)

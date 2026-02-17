@@ -222,6 +222,41 @@
           "Explanations of how Sun\u2013Moon distance varies with lunar phase and orbital geometry"
         ]
       }
+    },
+    {
+      "question": "Give me information about  the flight from Kolkata",
+      "system_answer": null,
+      "gap_reason": "The retrieved data covers flights to Kolkata (originating from Ahmedabad and Bangalore) on specific dates, but the query asks for flights from Kolkata (origin = Kolkata). Destination and travel date details are missing, so a direct answer cannot be provided.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "No flights originating from Kolkata are present in the data; missing origin/destination details and travel date(s).",
+        "recommended_data_to_add": [
+          "origin_city: Kolkata",
+          "destination_city: (required)",
+          "departure_date(s): (required)",
+          "preferred_airlines: (optional)",
+          "price_range: (optional)",
+          "departure_time_preferences: (optional)",
+          "duration_preferences: (optional)"
+        ]
+      }
+    },
+    {
+      "question": "Give me distance between sun moon and Delhi",
+      "system_answer": null,
+      "gap_reason": "The retrieved context contains only flight information between Kolkata and Delhi and contains no astronomical distance data for the Sun, Moon, or Delhi.",
+      "severity": "low",
+      "llm_analysis": {
+        "knowledge_gap": "No data on astronomical distances (Sun-Delhi, Moon-Delhi, Sun-Moon) in the provided documents. Requires astronomical/ephemeris data and possibly a timestamp and coordinates for Delhi.",
+        "recommended_data_to_add": [
+          "Sun-to-Delhi distance (at a given time/date)",
+          "Moon-to-Delhi distance (at a given time/date)",
+          "Sun-to-Moon distance (at a given time/date)",
+          "Delhi coordinates (latitude, longitude, altitude)",
+          "Required time of observation (UTC) and units (km, miles)",
+          "Ephemeris data or a method to compute light-time distances"
+        ]
+      }
     }
   ],
   "active_vector_source": "COSMOS"

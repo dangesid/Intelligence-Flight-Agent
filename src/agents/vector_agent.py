@@ -1,27 +1,52 @@
 # src/agents/vector_agent.py
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from src.agents.base_agent import BaseAgent
 from src.vector_store import FlightVectorStore
 
+
 class VectorAgent(BaseAgent):
     """
-    Autonomous Vector Retrieval Agent
+    Agentic Vector Retrieval Agent
+    - Retrieves relevant documents from the vector store
+    - Fully agentic-ready
     """
 
     def __init__(
         self,
         vector_store: FlightVectorStore | None = None,
-        threshold: float = 0.6,  # slightly lower
+        threshold: float = 0.6,
         top_n_fallback: int = 5,
     ):
+        super().__init__(name="VectorAgent")
         self.vector_store = vector_store or FlightVectorStore()
         self.threshold = threshold
         self.top_n_fallback = top_n_fallback
 
+    # -------------------
+    # LEGACY METHODS
+    # -------------------
     def can_handle(self, payload: Dict[str, Any]) -> bool:
         return "query" in payload and "retrieved_docs" not in payload
 
     def run(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return self.execute(payload)
+
+    # -------------------
+    # AGENTIC METHODS
+    # -------------------
+    def evaluate(self, payload: Dict[str, Any]) -> bool:
+        """
+        Decide if VectorAgent should act
+        """
+        return self.can_handle(payload)
+
+    def propose_action(self, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Suggest ContextBuilderAgent as next step
+        """
+        return {"next_agents": ["ContextBuilderAgent"], "tools_to_call": [], "modify_payload": {}}
+
+    def execute(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         query: str = payload.get("query", "").strip()
 
         if not query:
